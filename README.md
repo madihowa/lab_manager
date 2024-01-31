@@ -1,6 +1,6 @@
-# LFL Lab Manager
+# Hutzler Lab Manager
 
-This project serves as a lab manager for the [Levenson-Falk Lab](https://dornsife.usc.edu/lfl/) at USC. It automates reminders for maintenance, snacks, and manages lab meeting schedules through emails, Slack, and Google Calendar.
+This project serves as a lab manager for the [Hutzler Lab](https://www.hutzlerlab.com) at Caltech. It automates reminders for maintenance, snacks, and manages lab meeting schedules through emails, Slack, and Google Calendar.
 
 ## Project Structure
 
