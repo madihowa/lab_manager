@@ -17,11 +17,27 @@ from config_loader import ConfigLoader
 from email_notifier import EmailNotifier
 from slack_notifier import SlackNotifier
 
-__author__ = "Sadman Ahmed Shanto"
-__email__ = "shanto@usc.edu"
+__author__ = "Madison Howard"
+__email__ = "mihoward@caltech.edu"
 
-MEETING_SIGNATURE = "\n\nLooking Forward to it 🤩,\nLFL Bot."
-SERVICE_SIGNATURE = "\n\nThank you for your service 🫡,\nLFL Bot."
+MEETING_SIGNATURE = "\n\nBest,\nMadison Howard"
+SERVICE_SIGNATURE = "\n\nThank you for your service,\nMadison Howard"
+
+
+def is_meeting_scheduled(date, calendar_manager, search_word="Group Meeting"):
+    """
+    Checks the Google Calendar to see if there is a meeting scheduled for the given date.
+
+    Parameters:
+    - date (datetime.date): The date to check for a scheduled meeting.
+    - calendar_manager (CalendarManager): An instance of the CalendarManager class that provides access to the Google Calendar.
+    - search_word (str, optional): The keyword to search for in the event title. Defaults to "Group Meeting".
+
+    Returns:
+    - bool: True if no meeting is scheduled, False otherwise.
+    """
+    return not calendar_manager.check_event_existence(date, search_word)
+    
 
 def create_reminder(instruction):
     check_symbol = "-"
@@ -34,10 +50,10 @@ def create_step(reminder):
     return "{} {}\n".format(check_symbol, reminder)
 
 def get_header(name, date_maintenance):
-    header = "Hi {},\n\nThis is a reminder that next week it is your turn to do the LFL Lab Maintenance. Please refer to the following checklist.\n\n".format(name)
+    header = "Hi {},\n\nThis is a reminder that next week it is your turn to do the Hutzler Lab Maintenance. Please refer to the following checklist.\n\n".format(name)
     return header
 
-def get_signature(bot_name="LFL Bot"):
+def get_signature(bot_name="Hutzler Lab Bot"):
     salute = "🫡 "
     # salute = ""
     return "\n\nThank you for your service {},\n{}".format(salute, bot_name)
@@ -50,7 +66,7 @@ def get_reminders(reminders_list):
     reminders = "".join(reminders)
     return prompt + reminders + "\n"
 
-def create_email_content(name, date_maintenance, instructions, reminders, bot_name="LFL Bot"):
+def create_email_content(name, date_maintenance, instructions, reminders, bot_name="Hutzler Lab Bot"):
     header = get_header(name, date_maintenance)
     steps = []
     for instruction in instructions:
@@ -116,10 +132,6 @@ class LabNotificationSystem:
         print("=====================================")
         self.send_presentation_reminders()
         print("Handling Presentation reminders...")
-        self.send_lab_maintenance_reminders()
-        print("Handling Lab maintenance reminders...")
-        self.send_lab_snacks_reminders()
-        print("Handling Lab snacks reminders...")
         print("=====================================")
         print("\n")
 
@@ -143,19 +155,15 @@ class LabNotificationSystem:
 
     def no_meeting(self, today):
         # Check if next week today is a national holiday
-        today = today + timedelta(days=7)
-        if today in self.us_holidays:
-            self.slack_notifier.send_message('#lfl-general', f"Reminder: No lab meeting next week due to a national holiday - {self.us_holidays.get(today)}")
+        next_week = today + timedelta(days=23) # !TODO: change back to 7
+        if next_week in self.us_holidays:
+            #self.slack_notifier.send_message('#lfl-general', f"Reminder: No lab meeting next week due to a national holiday - {self.us_holidays.get(today)}")
             return True
-        # Check if today is the first presentation day of the month
-        elif today.day == self.presentation_day:
-            self.slack_notifier.send_message('#lfl-general', "Reminder: Today is 'Lab Citizen Day'")
-            return True
-        # All else case
+        # Check if next week has a calendar entry
         else:
-            return False
+            return is_meeting_scheduled(next_week, self.calendar_manager)
 
-    def send_presentation_reminders(self):
+    def send_presentation_reminders(self, search_word="Group Meeting"):
         today = datetime.today()
         tracker = self.load_duty_tracker()
 
@@ -168,40 +176,46 @@ class LabNotificationSystem:
                 current_presenter_id = tracker.get('presentation', None)
                 presenters, next_presenter_id, is_group_presentation = self.get_next_presenter(current_presenter_id)
 
-                pres_date = today + timedelta(days=7)
-                pres_date = pres_date
+                pres_date = today + timedelta(days=23) # !TODO: change back to 7
+                pres_datestring = pres_date.date()
 
                 # Handle group presentation for undergraduates
                 if is_group_presentation:
                     print("Group Presentation by undergrads")
                     for presenter_info in presenters:
-                        subject = "LFL Lab Meeting Presentation"
-                        message = f"Hello {presenter_info['name']},\n\nYou are scheduled to present at next week's lab meeting - {pres_date}." + MEETING_SIGNATURE
+                        subject = "Hutzler Lab Group Meeting Presentation"
+                        message = f"Hi {presenter_info['name']},\n\nYou are scheduled to present at next week's lab meeting - {pres_datestring}." + MEETING_SIGNATURE
                         self.email_notifier.send_email([presenter_info['email']], subject, message)
 
                     # Slack notification for group presentation
                     # self.slack_notifier.send_message('#general', "Next week's presentation will be given by our undergrads.")
 
                     # Create Google Calendar event for group presentation
+                    """
                     self.calendar_manager.create_timed_event(
                         title="Undergraduate Group Presentation",
                         date=pres_date,
                         start_time_str=self.presentation_time,
                         attendees=[member['email'] for member in presenters]
                     )
+                    """
+                    # Update the Google Calendar event for the group presentation
+                    new_event_name = "Group Meeting - Undergraduate Group Presentation"
+                    self.calendar_manager.change_event_name(pres_date, search_word, new_event_name)
 
                 # Handle individual presentation
                 else:
                     presenter_info = presenters[0]  # Only one presenter
                     print(f"Group Presentation by {presenter_info['name']}")
-                    subject = "LFL Lab Meeting Presentation"
-                    message = f"Hello {presenter_info['name']},\n\nYou are scheduled to present at next week's lab meeting - {pres_date}." + MEETING_SIGNATURE
+                    subject = "Hutzler Lab Group Meeting Presentation"
+                    message = f"Hi {presenter_info['name']},\n\nYou are scheduled to present at next week's lab meeting - {pres_datestring}." + MEETING_SIGNATURE
                     self.email_notifier.send_email([presenter_info['email']], subject, message)
 
                     # Slack notification for individual presentation
                     # self.slack_notifier.send_message('#general', f"Next week's presentation will be given by {presenter_info['name']}.")
 
                     # Create Google Calendar event for individual presentation
+                    """
                     self.calendar_manager.create_timed_event(
                         title="Group Meeting Presentation by " + presenter_info['name'],
                         date=pres_date,
@@ -209,6 +223,13 @@ class LabNotificationSystem:
                         attendees=[member['email'] for member in presenters],
                         location=self.location
                     )
+                    """
+                    # Update the Google Calendar event for the group presentation
+                    new_event_name = f"Group Meeting - {presenter_info['name']} Presents"
+                    self.calendar_manager.change_event_name(pres_date, search_word, new_event_name)
+
+                    # Send out calendar invites
+                    self.calendar_manager.add_attendees_to_event(pres_date, new_event_name, [{'email': presenter_info['email']}])
 
                 # Update the duty tracker
                 self.update_duty_tracker('presentation', next_presenter_id)
@@ -318,10 +339,13 @@ def alert_developer(e):
 
 if __name__ == "__main__":
     presentation_day = "Monday"
-    presentation_time = "2:00 PM"
+    presentation_time = "4:00 PM"
     maintenance_day = "Friday"
-    location = "SSC 319"
+    location = "Kellog Library"
 
+    system = LabNotificationSystem(presentation_day, presentation_time, maintenance_day, location)
+    system.run()
+    """
     system = None
     try:
         system = LabNotificationSystem(presentation_day, presentation_time, maintenance_day, location)
@@ -335,3 +359,4 @@ if __name__ == "__main__":
         print(f"Caught exception during execution: {e}")
         alert_developer(e)
         sys.exit(1)
+    """
