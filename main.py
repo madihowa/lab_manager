@@ -155,7 +155,7 @@ class LabNotificationSystem:
 
     def no_meeting(self, today):
         # Check if next week today is a national holiday
-        next_week = today + timedelta(days=7) # !TODO: change back to 7
+        next_week = today + timedelta(days=14) # !TODO: change back to 7
         if next_week in self.us_holidays:
             #self.slack_notifier.send_message('#lfl-general', f"Reminder: No lab meeting next week due to a national holiday - {self.us_holidays.get(today)}")
             return True
@@ -176,7 +176,7 @@ class LabNotificationSystem:
                 current_presenter_id = tracker.get('presentation', None)
                 presenters, next_presenter_id, is_group_presentation = self.get_next_presenter(current_presenter_id)
 
-                pres_date = today + timedelta(days=7) # !TODO: change back to 7
+                pres_date = today + timedelta(days=14) # !TODO: change back to 7
                 pres_datestring = pres_date.date()
 
                 # Handle group presentation for undergraduates
@@ -184,7 +184,7 @@ class LabNotificationSystem:
                     print("Group Presentation by undergrads")
                     for presenter_info in presenters:
                         subject = "Hutzler Lab Group Meeting Presentation"
-                        message = f"Hi {presenter_info['name']},\n\nYou are scheduled to present at next week's lab meeting - {pres_datestring}." + MEETING_SIGNATURE
+                        message = f"Hi {presenter_info['name']},\n\nYou are scheduled to present at Wednesday group meeting in two weeks on - {pres_datestring}." + MEETING_SIGNATURE
                         self.email_notifier.send_email([presenter_info['email']], subject, message)
 
                     # Slack notification for group presentation
@@ -208,7 +208,7 @@ class LabNotificationSystem:
                     presenter_info = presenters[0]  # Only one presenter
                     print(f"Group Presentation by {presenter_info['name']}")
                     subject = "Hutzler Lab Group Meeting Presentation"
-                    message = f"Hi {presenter_info['name']},\n\nYou are scheduled to present at next week's lab meeting - {pres_datestring}." + MEETING_SIGNATURE
+                    message = f"Hi {presenter_info['name']},\n\nYou are scheduled to present at Wednesday group meeting in two weeks on - {pres_datestring}." + MEETING_SIGNATURE
                     self.email_notifier.send_email([presenter_info['email']], subject, message)
 
                     # Slack notification for individual presentation
