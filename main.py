@@ -155,7 +155,7 @@ class LabNotificationSystem:
 
     def no_meeting(self, today):
         # Check if next week today is a national holiday
-        next_week = today + timedelta(days=23) # !TODO: change back to 7
+        next_week = today + timedelta(days=7) # !TODO: change back to 7
         if next_week in self.us_holidays:
             #self.slack_notifier.send_message('#lfl-general', f"Reminder: No lab meeting next week due to a national holiday - {self.us_holidays.get(today)}")
             return True
@@ -176,7 +176,7 @@ class LabNotificationSystem:
                 current_presenter_id = tracker.get('presentation', None)
                 presenters, next_presenter_id, is_group_presentation = self.get_next_presenter(current_presenter_id)
 
-                pres_date = today + timedelta(days=23) # !TODO: change back to 7
+                pres_date = today + timedelta(days=7) # !TODO: change back to 7
                 pres_datestring = pres_date.date()
 
                 # Handle group presentation for undergraduates
@@ -338,8 +338,8 @@ def alert_developer(e):
     email_notifier.send_email([__email__], "Lab Notification System Error", content)
 
 if __name__ == "__main__":
-    presentation_day = "Monday"
-    presentation_time = "4:00 PM"
+    presentation_day = "Wednesday"
+    presentation_time = "9:30 AM"
     maintenance_day = "Friday"
     location = "Kellog Library"
 
